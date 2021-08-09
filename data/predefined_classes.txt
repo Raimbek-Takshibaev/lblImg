@@ -1,1 +1,4 @@
-car
+vehicle
+police
+ambulance
+bus
