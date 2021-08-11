@@ -1,11 +1,11 @@
 from os import listdir
 from shutil import copyfile
 
-inputImgPath = "C:\\datasets\\lpr_images\\images\\"
-inputLblPath = "C:\\datasets\\lpr_images\\labels\\"
-saveImgPaths = ["C:\\datasets\\lprnet_dataset\\train\\images\\", "C:\\datasets\\lprnet_dataset\\val\\images\\"]
-saveLblPaths = ["C:\\datasets\\lprnet_dataset\\train\\labels\\", "C:\\datasets\\lprnet_dataset\\val\\labels\\"]
-imgsCount = [500, 500]
+inputImgPath = "$yourPath"
+inputLblPath = "$yourPath"
+saveImgPaths = ["$yourPath"]
+saveLblPaths = ["$yourPath"]
+imgsCount = [500]
 
 files = listdir(inputImgPath)
 for (i, savePath) in enumerate(saveImgPaths):

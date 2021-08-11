@@ -3,12 +3,11 @@ from shutil import copyfile
 from PIL import Image, ImageTk
 import tkinter as tk
 
-inputImagesPaths = ["C:\\Projects\\trafficCamDataset\\test\\images\\", "C:\\Projects\\trafficCamDataset\\train\\images\\", "C:\\Projects\\trafficCamDataset\\val\\images\\"]
-inputLabelsPaths = ["C:\\Projects\\trafficCamDataset\\test\\labels\\", "C:\\Projects\\trafficCamDataset\\train\\labels\\", "C:\\Projects\\trafficCamDataset\\val\\labels\\"]
-saveImagesPaths = ["C:\\Projects\\lpdNetDataset\\test\\images\\", "C:\\Projects\\lpdNetDataset\\train\\images\\", "C:\\Projects\\lpdNetDataset\\val\\images\\"]
-saveLabelsPaths = ["C:\\Projects\\lpdNetDataset\\test\\labels\\", "C:\\Projects\\lpdNetDataset\\train\\labels\\", "C:\\Projects\\lpdNetDataset\\val\\labels\\"]
-classList = ["license_plate"]
-outputClassList = ["car"]
+inputImagesPaths = ["$yourPath"] # вводные пути до картинок
+inputLabelsPaths = ["$yourPath"] # вводные пути до уже размеченных лейблов
+saveImagesPaths = ["$yourPath"] # пути сохранения картинок
+saveLabelsPaths = ["$yourPath"] # пути сохранения лейблов
+classList = ["license_plate"] # название класса (для LPDNet длина массива должна остаться текущей)
 
 windowWidth = 250
 window = tk.Tk()
@@ -162,7 +161,7 @@ for (i, inputImgPath) in enumerate(inputImagesPaths):
                         trueImgCoor = inputImgCoor
         img = image.crop((trueImgCoor[0], trueImgCoor[1], trueImgCoor[2], trueImgCoor[3]))
         img.save(saveImagesPaths[i] + file)
-        (class_index, x_center, y_center, w, h) = bnd_box_to_yolo_line(x_min, x_max, y_min, y_max, img.size, "license_plate")
+        (class_index, x_center, y_center, w, h) = bnd_box_to_yolo_line(x_min, x_max, y_min, y_max, img.size, classList[0])
         newLabel = open(saveLabelsPaths[i] + labelName, "w")
         newLabel.write(str(class_index) + " " +  str(x_center) + " " +  str(y_center) + " " +  str(w) + " " +  str(h))
         newLabel.close()
