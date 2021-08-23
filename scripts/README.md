@@ -32,6 +32,43 @@
     classList = ["license_plate"] # название класса (для LPDNet длина массива должна остаться текущей)
     ## длина массивов inputImagesPaths, inputLabelsPaths, saveImagesPaths, saveLabelsPaths должна быть одинаковой, а также порядок папок по типу train, val, test должен быть схожим
 
+**Пример запуска для dataset_1**
+
+ - В датасете есть две папки - labels, images
+ следовательно нам нужно создать отдельнрую директорию под названием lpdDataset_1, к примеру. И в эту же директорию добавляем две папки labels, images.
+ 
+ - Далее нужно вставить пути в массивы до этих папок:
+ 
+
+	    inputImagesPaths = ["path/to/dataset_1/images/"]
+    
+	    inputLabelsPaths = ["path/to/dataset_1/labels/"]
+    
+	    saveImagesPaths = ["path/to/lpdDataset_1/images/"]
+    
+	    saveLabelsPaths = ["path/to/lpdDataset_1/labels/"]
+
+**Очень важно чтоб на конце этих путей стоял '/'**
+
+Для запуска скрипта нужно скачать:
+
+ - Pillow
+	
+
+	    python3 -m pip install --upgrade pip
+    	python3 -m pip install --upgrade Pillow
+
+ - Tkinter
+ 
+
+	    pip install tk
+
+ - Ну и запускаем скрипт
+ 
+ 
+
+	    python lpdNet-converter.py
+
 ## Тренировка TrafficCamNet
 
  1. Раделить датасет на train, val, test и распределить используя dataset-distributor
