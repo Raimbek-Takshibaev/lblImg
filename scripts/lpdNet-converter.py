@@ -115,15 +115,15 @@ for (i, inputImgPath) in enumerate(inputImagesPaths):
     files = listdir(inputImgPath)
     for (a, file) in enumerate(files):
         params = file.split("_")
-        if(len(params) != 5):
+        if(len(params) < 5):
             continue
         image = Image.open(inputImgPath + file)
         format = image.format
 
-        plateX = int(params[1])
-        plateY = int(params[2])
-        plateWidth = int(params[3])
-        plateHeight = int(params[4][:-len(format)])
+        plateX = int(params[-4])
+        plateY = int(params[-3])
+        plateWidth = int(params[-2])
+        plateHeight = int(params[-1][:-len(format)])
         
         labelName = file[:-len(format)] + ".txt"
         imageSize = image.size
