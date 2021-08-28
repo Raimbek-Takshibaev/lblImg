@@ -96,13 +96,19 @@
 
 ## Тренировка LPDNet
 
- 1. подготовить датасет используя уже размеченные картинки для trafficCamNet используя lpdNet-converter
- 2. повторить то же самое с TrafficCamDataset
+ - подготовить датасет используя уже размеченные картинки для trafficCamNet используя lpdNet-converter
+ - повторить то же самое с TrafficCamDataset
  
 ## Тренировка LPRNet
- 1. Сконвертировать картинки используя ViolationFilter
- 2. Раделить датасет на train, val, test и распределить используя dataset-distributor
- 3. настроить .tlt_mounts.json:
+ 
+ - **Необходимо подготовить датасет**
+	 1. Первым делом должен присутствовать размеченный LPDNet для йоло
+	 2. Преобразовать из LPDNet в LPR используя скрипт fromLpdToLpr.py
+	 3. Раделить датасет на train, val и распределить используя dataset-distributor.py
+	 4. Вставить датасет к примеру в ~/projects/LPRNet/datasets под названием dataset_2
+	 5. Создадим папку specs и добавим текстовый документ под названием us_lp_characters.txt
+	 6. Заполним us_lp_characters.txt, добавляя символы, которые будут присутствовать в номерах, **раздельно и с переносом строки**
+ - **Нужно настроить .tlt_mounts.json:**
 
 	    nano ~/tlt_mounts.json
 
@@ -112,18 +118,87 @@
 	    {
 		    "Mounts": [
 		        {
-		            "source": "/path/to/your/experiments",
-		            "destination": "/workspace/tlt-experiments"
+		            "source": "~/projects/LPRNet",
+		            "destination": "/workspace/LPRNet"
 		        }
 		    ]
 		}
 				
-Отныне введенная директория сверху будет использоваться в tlt_container 
-    4. подготовить файл конфигурации, вот ссылка на документацию: https://docs.nvidia.com/tlt/tlt-user-guide/text/character_recognition/lprnet.html
-    5.  тренировка
+Отныне введенная директория сверху будет развертываться в tlt_container 
+    
+
+ - **Далее нужно подготовить файл конфигурации:** 
+ 
+
+	    random_seed: 42
+		lpr_config {
+		  hidden_units: 512
+		  max_label_length: 10
+		  arch: "baseline"
+		  nlayers: 18
+		}
+		training_config {
+		  batch_size_per_gpu: 64
+		  num_epochs: 300
+		  learning_rate {
+			  soft_start_annealing_schedule {
+			    min_learning_rate: 1e-6
+			    max_learning_rate: 1e-4
+			    soft_start: 0.001
+			    annealing: 0.7
+				}
+			}
+		  regularizer {
+		    type: L2
+		    weight: 5e-4
+		  }
+		}
+		eval_config {
+		  validation_period_during_training: 5
+		  batch_size: 1
+		}
+		augmentation_config {
+		  output_width: 96
+		  output_height: 48
+		  output_channel: 3
+		  max_rotate_degree: 5
+		  rotate_prob: 0.5
+		  gaussian_kernel_size: 5
+		  gaussian_kernel_size: 7
+		  gaussian_kernel_size: 15
+		  blur_prob: 0.5
+		  reverse_color_prob: 0.5
+		  keep_original_prob: 0.3
+		}
+		dataset_config {
+		  data_sources: {
+		    label_directory_path: "/workspace/LPRNet/datasets/dataset_2/train/labels"
+		    image_directory_path: "/workspace/LPRNet/datasets/dataset_2/train/images"
+		  }
+		  characters_list_file: "/workspace/LPRNet/specs/us_lp_characters.txt"
+		  validation_data_sources: {
+		    label_directory_path: "/workspace/LPRNet/datasets/dataset_2/train/val/images"
+		    image_directory_path: "/workspace/LPRNet/datasets/dataset_2/train/val/labels""
+		  }
+		}
+Отдельно стоит выделить **dataset_config**:
+|dataset_config|  |
+|--|--|
+|data_sources| label_directory_path - путь до тренировочных лейблов image_directory_path - путь до тренировочных картинок   |
+|characters_list_file| путь до txt файла со списком символов |
+|validation_data_sources| label_directory_path - путь до валидационных лейблов image_directory_path - путь до валидационных картинок   |
+
+Подробную информацию о каждой конфигурации можно найти тут -
+https://docs.nvidia.com/tlt/tlt-user-guide/text/character_recognition/lprnet.html
+
+Сохраним его в папке specs под названием dataset_2_spec.txt
+   
+
+ - **Тренировка**
+
 			
 
-    tlt lprnet train -e <experiment_spec_file>
+	    tao lprnet train -e <experiment_spec_file>
                  -r <results_dir>
                  -k <key>
                 [--gpus <num_gpus>]
@@ -132,4 +207,58 @@
                 [--log_file <log_file>]
                 [-m <resume_model_path>]
                 [--initial_epoch <initial_epoch>]
-6. подробное описание всех комманд присутствует по ссылке сверху
+	| Обязятельные аргументы |   |
+	|--|--|
+	| -e, --experiment_spec_file | Путь до файла конфигурации |
+	| -r, --results_dir | Путь к папке, в которую должны быть записаны результаты 			эксперимента. |
+	| -k, --key | Ключ кодировки, определяемый пользователем, для сохранения или 	загрузки модели .tlt. |
+	______
+	| Необязятельные аргументы|  |
+	|--|--|
+	|. --gpus | Количество графических процессоров, которые будут использоваться 	при обучении в сценарии с несколькими графическими процессорами (по умолчанию: 1). |
+	|. --gpu_index | Индексы GPU, используемые для обучения. Мы можем указать индексы графического процессора, используемые для запуска обучения, когда на машине установлено несколько графических процессоров. |
+	|. --use_amp | Флаг для включения обучения AMP. |
+	|. --log_file | Путь к файлу журнала. По умолчанию - stdout. |
+	| -m,  --resume_model_weights | Путь к предварительно обученной модели или модели для продолжения обучения.|
+	|. --initial_epoch | Эпоха начала тренировок. |
+
+Запуск тренировки
+
+    tao lprnet train -e /workspace/LPRNet/specs/dataset_2_spec.txt -r /workspace/LPRNet/unpruned_pretrained_model -k nvidia_tlt -m /workspace/LPRNet/unpruned_pretrained_model/weights/lprnet_epoch-300 --initial_epoch 301
+
+  - **Экспорт модели**
+
+			
+
+	    tlt lprnet export -m <model>
+                  -k <key>
+                  -e <experiment_spec>
+                  [--gpu_index <gpu_index>]
+                  [--log_file <log_file>]
+                  [-o <output_file>]
+                  [--data_type {fp32,fp16}]
+                  [--max_workspace_size <max_workspace_size>]
+                  [--max_batch_size <max_batch_size>]
+                  [--engine_file <engine_file>]
+                  [-v]
+	
+	|  Обязятельные аргументы |   |
+	| -- | -- |
+	| -e, --experiment_spec_file | Путь до файла конфигурации |
+	| -m,  --resume_model_weights | Экспортируемая модель .tlt|
+	| -k, --key | Ключ кодировки, определяемый пользователем, для сохранения или 	загрузки модели .tlt. |
+	______
+	
+	|  Необязятельные аргументы|  |
+	| -- | -- |
+	|  . --gpu_index | Индексы GPU, используемые для обучения. Мы можем указать индексы графического процессора, используемые для запуска обучения, когда на машине установлено несколько графических процессоров. |
+	|  . --log_file | Путь к файлу журнала. По умолчанию - stdout. |
+	|  -o,  --output_file | Путь для сохранения экспортированной модели. По умолчанию   ./ <input_file> .etlt. |
+	|  . --data_type | Требуемый тип данных двигателя для создания кэша калибровки в режиме INT8. Возможные варианты: fp32 или fp16. Значение по умолчанию - fp32. Вы можете использовать следующие необязательные аргументы для сохранения механизма TRT, созданного для проверки экспорта: |
+	|  . --max_batch_size| Максимальный размер пакета движка TensorRT. Значение по умолчанию - 16. |
+	|  .  --max_workspace_size | Максимальный размер рабочего пространства движка TensorRT. Значение по умолчанию - 1073741824 (1 << 30).|
+	|  .  --engine_file | Путь к сериализованному файлу движка TensorRT. Обратите внимание, что этот файл зависит от оборудования и не может быть распространен на графические процессоры. Полезно для быстрой проверки точности вашей модели с помощью TensorRT на хосте. Поскольку файл ядра TensorRT зависит от оборудования, вы не можете использовать этот файл ядра для развертывания, если графический процессор развертывания не идентичен обучающему графическому процессору.|
+
+Запуск экспорта
+
+    tlt lprnet export -m /workspace/LPRNet/unpruned_pretrained_model/weights/lprnet_epoch-600.tlt -k nvidia_tlt -e /workspace/LPRNet/specs/dataset_2_spec.txt --data_type fp16 -o /workspace/LPRNet/exported_models/dataset_1_epoch_600.etlt
