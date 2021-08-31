@@ -128,7 +128,7 @@
     
 
  - **Далее нужно подготовить файл конфигурации:** 
- 
+  Создадим txt файл под названием dataset_2_spec.txt и сохраним его в папке specs. Вставим эту конфигурацию:
 
 	    random_seed: 42
 		lpr_config {
@@ -184,14 +184,20 @@
 Отдельно стоит выделить **dataset_config**:
 |dataset_config|  |
 |--|--|
-|data_sources| label_directory_path - путь до тренировочных лейблов image_directory_path - путь до тренировочных картинок   |
+|data_sources| label_directory_path - путь до тренировочных лейблов, image_directory_path - путь до тренировочных картинок   |
 |characters_list_file| путь до txt файла со списком символов |
-|validation_data_sources| label_directory_path - путь до валидационных лейблов image_directory_path - путь до валидационных картинок   |
+|validation_data_sources| label_directory_path - путь до валидационных лейблов, image_directory_path - путь до валидационных картинок   |
 
 Подробную информацию о каждой конфигурации можно найти тут -
-https://docs.nvidia.com/tlt/tlt-user-guide/text/character_recognition/lprnet.html
+https://docs.nvidia.com/tao/tao-toolkit/text/character_recognition/lprnet.html
 
-Сохраним его в папке specs под названием dataset_2_spec.txt
+
+ - **Virtual environment** 
+ 
+
+	    source ~/.local/bin/virtualenvwrapper.sh
+		mkvirtualenv launcher -p /usr/bin/python3
+
    
 
  - **Тренировка**
@@ -261,4 +267,11 @@ https://docs.nvidia.com/tlt/tlt-user-guide/text/character_recognition/lprnet.htm
 
 Запуск экспорта
 
-    tlt lprnet export -m /workspace/LPRNet/unpruned_pretrained_model/weights/lprnet_epoch-600.tlt -k nvidia_tlt -e /workspace/LPRNet/specs/dataset_2_spec.txt --data_type fp16 -o /workspace/LPRNet/exported_models/dataset_1_epoch_600.etlt
+    tlt lprnet export -m /workspace/LPRNet/unpruned_pretrained_model/weights/lprnet_epoch-600.tlt -k nvidia_tlt -e /workspace/LPRNet/specs/dataset_2_spec.txt --data_type fp16 -o /workspace/LPRNet/exported_models/dataset_2_epoch_600.etlt
+
+ - **Конвертирование в engine**
+ 
+		
+		docker run --gpus all -it --rm -v ~/projects/LPRNet:/workspace/LPRNet nvcr.io/nvidia/tensorrt:21.08-		py3
+		cd /workspace/LPRNet/tao_converter/cuda11.3-trt8.0
+	    ./tao-converter ../../exported_models/dataset_2_epoch_600.etlt -k nvidia_tlt -p image_input,1x3x48x96,4x3x48x96,16x3x48x96 -e ../../engines/dataset_2_epoch_600.engine
